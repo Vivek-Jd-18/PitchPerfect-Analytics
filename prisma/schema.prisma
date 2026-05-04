@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FAN
+}
+
+enum ContractGrade {
+  A
+  B
+  C
+}
+
+model User {
+  id           String  @id @default(uuid()) @db.Uuid
+  email        String  @unique
+  passwordHash String? // Nullable because FAN users use Google OAuth
+  googleId     String? @unique
+  role         Role    @default(FAN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  dateOfBirth DateTime
+  nationality String
+  role        String // e.g., Batsman, Bowler, All-Rounder
+
+  contract Contract?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contract {
+  id          String        @id @default(uuid()) @db.Uuid
+  playerId    String        @unique @db.Uuid
+  grade       ContractGrade
+  baseSalary  Decimal       @db.Decimal(10, 2)
+  matchFee    Decimal       @db.Decimal(10, 2)
+  renewalDate DateTime
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
